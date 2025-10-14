@@ -1,12 +1,8 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json, col
+from pyspark.sql.functions import from_json, col, to_timestamp
 from pyspark.sql.types import StructType, StructField, IntegerType, DoubleType, StringType
 
-# ----------------------------------------------------------
-# Task 1: Basic Streaming Ingestion and JSON Parsing
-# ----------------------------------------------------------
-
-spark = SparkSession.builder.appName("L9-Task1-IngestParse").getOrCreate()
+spark = SparkSession.builder.appName("L9-Task1-BasicStream").getOrCreate()
 
 schema = StructType([
     StructField("trip_id", IntegerType()),
@@ -16,7 +12,7 @@ schema = StructType([
     StructField("timestamp", StringType())
 ])
 
-# Read from the socket server started by data_generator.py
+# Read streaming data from the socket
 raw_df = (
     spark.readStream.format("socket")
     .option("host", "localhost")
@@ -24,15 +20,20 @@ raw_df = (
     .load()
 )
 
-# Parse JSON and extract columns
-parsed_df = raw_df.select(from_json(col("value"), schema).alias("data")).select("data.*")
+# Parse JSON and add a proper timestamp column
+df = (
+    raw_df.select(from_json(col("value"), schema).alias("data"))
+    .select("data.*")
+    .withColumn("event_time", to_timestamp(col("timestamp"), "yyyy-MM-dd HH:mm:ss"))
+)
 
-# Output parsed stream to console
+# Write to CSV output
 query = (
-    parsed_df.writeStream
+    df.writeStream
     .outputMode("append")
-    .format("console")
-    .option("truncate", False)
+    .format("csv")
+    .option("path", "outputs/task1")
+    .option("checkpointLocation", "outputs/checkpoints/task1")
     .start()
 )
 
