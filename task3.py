@@ -1,23 +1,46 @@
-# import the necessary libraries.
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import from_json, col, to_timestamp, window, sum as _sum
+from pyspark.sql.types import StructType, StructField, IntegerType, DoubleType, StringType
 
-# Create a Spark session
+# ----------------------------------------------------------
+# Task 3: 5-minute windowed aggregation of fare_amount
+# Sliding window: 1 minute, Watermark: 1 minute
+# ----------------------------------------------------------
 
-# Define the schema for incoming JSON data
+spark = SparkSession.builder.appName("L9-Task3-WindowedAnalytics").getOrCreate()
 
-# Read streaming data from socket
+schema = StructType([
+    StructField("trip_id", IntegerType()),
+    StructField("driver_id", IntegerType()),
+    StructField("distance_km", DoubleType()),
+    StructField("fare_amount", DoubleType()),
+    StructField("timestamp", StringType())
+])
 
-# Parse JSON data into columns using the defined schema
+raw_df = (
+    spark.readStream.format("socket")
+    .option("host", "localhost")
+    .option("port", 9999)
+    .load()
+)
 
-# Convert timestamp column to TimestampType and add a watermark
+parsed_df = raw_df.select(from_json(col("value"), schema).alias("data")).select("data.*") \
+    .withColumn("event_time", to_timestamp(col("timestamp"), "yyyy-MM-dd HH:mm:ss"))
 
-# Perform windowed aggregation: sum of fare_amount over a 5-minute window sliding by 1 minute
+# Windowed aggregation
+windowed_df = (
+    parsed_df.withWatermark("event_time", "1 minute")
+    .groupBy(window(col("event_time"), "5 minutes", "1 minute"))
+    .agg(_sum("fare_amount").alias("total_fare"))
+)
 
-# Extract window start and end times as separate columns
-
-# Define a function to write each batch to a CSV file with column names
-
-    # Save the batch DataFrame as a CSV file with headers included
-    
-# Use foreachBatch to apply the function to each micro-batch
+query = (
+    windowed_df.writeStream
+    .outputMode("update")
+    .format("csv")
+    .option("path", "outputs/task_3")
+    .option("checkpointLocation", "checkpoints/task_3")
+    .start()
+)
 
 query.awaitTermination()

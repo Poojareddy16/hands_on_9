@@ -1,26 +1,44 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json, col, avg, sum
-from pyspark.sql.types import StructType, StructField, StringType, DoubleType, TimestampType
+from pyspark.sql.functions import from_json, col, sum as _sum, avg
+from pyspark.sql.types import StructType, StructField, IntegerType, DoubleType, StringType
 
-# Create a Spark session
+# ----------------------------------------------------------
+# Task 2: Aggregate total fare & average distance per driver
+# ----------------------------------------------------------
 
+spark = SparkSession.builder.appName("L9-Task2-Aggregations").getOrCreate()
 
-# Define the schema for incoming JSON data
+schema = StructType([
+    StructField("trip_id", IntegerType()),
+    StructField("driver_id", IntegerType()),
+    StructField("distance_km", DoubleType()),
+    StructField("fare_amount", DoubleType()),
+    StructField("timestamp", StringType())
+])
 
-# Read streaming data from socket
+raw_df = (
+    spark.readStream.format("socket")
+    .option("host", "localhost")
+    .option("port", 9999)
+    .load()
+)
 
-# Parse JSON data into columns using the defined schema
+parsed_df = raw_df.select(from_json(col("value"), schema).alias("data")).select("data.*")
 
-# Convert timestamp column to TimestampType and add a watermark
+# Real-time aggregation
+agg_df = parsed_df.groupBy("driver_id").agg(
+    _sum("fare_amount").alias("total_fare"),
+    avg("distance_km").alias("avg_distance")
+)
 
-# Compute aggregations: total fare and average distance grouped by driver_id
-
-# Define a function to write each batch to a CSV file
-
-    # Save the batch DataFrame as a CSV file with the batch ID in the filename
-    
-
-# Use foreachBatch to apply the function to each micro-batch
-
+# Write results continuously to CSV
+query = (
+    agg_df.writeStream
+    .outputMode("complete")
+    .format("csv")
+    .option("path", "outputs/task_2")
+    .option("checkpointLocation", "checkpoints/task_2")
+    .start()
+)
 
 query.awaitTermination()
