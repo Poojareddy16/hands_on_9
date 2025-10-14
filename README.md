@@ -181,5 +181,14 @@ Through this project, I successfully:
 - Strengthened overall proficiency in **PySpark**, **data streaming**, and **real-time data analytics**.
 
 ---
+### 📊 Result Summary
+
+| Task | Description | Output Folder |
+|------|--------------|----------------|
+| Task 1 | Parsed live JSON ride data | `outputs/task1/` |
+| Task 2 | Aggregated total fare and average distance per driver | `outputs/task_2/` |
+| Task 3 | Calculated total fare in 5-minute sliding windows | `outputs/task3/` |
+
+---
 
 ✅ *This project demonstrates my ability to build end-to-end Spark Streaming pipelines, perform live analytics, and handle time-based data aggregations effectively.*
