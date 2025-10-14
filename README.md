@@ -60,18 +60,18 @@ hands_on_9/
 
 ### 🗂️ Descriptions
 
-- data_generator.py – Generates continuous streaming data with schema
+**- data_generator.py** – Generates continuous streaming data with schema
 ```bash
 (trip_id, driver_id, distance_km, fare_amount, timestamp)
 ```
 
-- task1.py – Reads and parses real-time JSON data stream
+**- task1.py** – Reads and parses real-time JSON data stream
 
-- task2.py – Performs live aggregations per driver (total fare, average distance)
+**- task2.py** – Performs live aggregations per driver (total fare, average distance)
 
-- task3.py – Analyzes fare trends using time-based windowed aggregation
+**- task3.py** – Analyzes fare trends using time-based windowed aggregation
 
-- outputs/ – Stores all task results in CSV format
+**- outputs/** – Stores all task results in CSV format
 
 
 ## 🚀 Setup and Execution
@@ -93,12 +93,12 @@ python task1.py
 
 Reads live JSON data from socket (localhost:9999)
 
-Parses into structured columns:
+**Parses into structured columns:**
 ```bash
 trip_id, driver_id, distance_km, fare_amount, timestamp
 ```
 
-Writes parsed data to:
+**Writes parsed data to:**
 ```bash
 outputs/task1/
 ```
