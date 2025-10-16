@@ -1,40 +1,44 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json, col, to_timestamp
-from pyspark.sql.types import StructType, StructField, IntegerType, DoubleType, StringType
+from pyspark.sql.functions import from_json, col
+from pyspark.sql.types import StructType, StructField, StringType, DoubleType
 
-spark = SparkSession.builder.appName("L9-Task1-BasicStream").getOrCreate()
+# 1️⃣ Create Spark session
+spark = SparkSession.builder.appName("RideSharingAnalytics_Task1").getOrCreate()
 
+# 2️⃣ Define schema for incoming JSON data
 schema = StructType([
-    StructField("trip_id", IntegerType()),
-    StructField("driver_id", IntegerType()),
-    StructField("distance_km", DoubleType()),
-    StructField("fare_amount", DoubleType()),
-    StructField("timestamp", StringType())
+    StructField("trip_id", StringType(), True),
+    StructField("driver_id", StringType(), True),
+    StructField("distance_km", DoubleType(), True),
+    StructField("fare_amount", DoubleType(), True),
+    StructField("timestamp", StringType(), True)
 ])
 
-# Read streaming data from the socket
-raw_df = (
-    spark.readStream.format("socket")
+# 3️⃣ Read streaming data from socket
+data = (
+    spark.readStream
+    .format("socket")
     .option("host", "localhost")
     .option("port", 9999)
     .load()
 )
 
-# Parse JSON and add a proper timestamp column
-df = (
-    raw_df.select(from_json(col("value"), schema).alias("data"))
-    .select("data.*")
-    .withColumn("event_time", to_timestamp(col("timestamp"), "yyyy-MM-dd HH:mm:ss"))
+# 4️⃣ Parse JSON data into structured columns
+parsed_data = (
+    data.select(from_json(col("value").cast("string"), schema).alias("data"))
+        .select("data.*")
 )
 
-# Write to CSV output
-query = (
-    df.writeStream
-    .outputMode("append")
+# 5️⃣ Write parsed data to CSV files inside outputs/task1/
+query_task1 = (
+    parsed_data.writeStream
     .format("csv")
-    .option("path", "outputs/task1")
-    .option("checkpointLocation", "outputs/checkpoints/task1")
+    .outputMode("append")
+    .option("header", "true")
+    .option("path", "outputs/task1/")                     # 👈 matches your structure
+    .option("checkpointLocation", "checkpoints/task1/")   # 👈 checkpoint folder inside checkpoints/
     .start()
 )
 
-query.awaitTermination()
+# 6️⃣ Keep the stream running
+query_task1.awaitTermination()
