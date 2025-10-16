@@ -186,7 +186,7 @@ Through this project, I successfully:
 | Task | Description | Output Folder |
 |------|--------------|----------------|
 | Task 1 | Parsed live JSON ride data | `outputs/task1/` |
-| Task 2 | Aggregated total fare and average distance per driver | `outputs/task_2/` |
+| Task 2 | Aggregated total fare and average distance per driver | `outputs/task2/` |
 | Task 3 | Calculated total fare in 5-minute sliding windows | `outputs/task3/` |
 
 ---
